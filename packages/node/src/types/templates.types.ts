@@ -2,7 +2,7 @@ export type TemplateFormat = "html" | "react";
 
 export interface TemplateVariable {
   readonly name: string;
-  readonly type?: "string" | "number" | "boolean" | "date" | "url" | "image";
+  readonly type?: "string" | "number" | "color";
   readonly fallbackValue?: string;
   readonly description?: string;
 }
