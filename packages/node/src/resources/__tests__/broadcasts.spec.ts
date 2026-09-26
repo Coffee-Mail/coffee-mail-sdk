@@ -3,7 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { HttpClient } from "../../core/http-client.js";
 import { Broadcasts } from "../broadcasts.js";
 
-import type { BroadcastDetail } from "../../types/broadcasts.types.js";
+import type {
+  BroadcastDetail,
+  CreateBroadcastPayload,
+} from "../../types/broadcasts.types.js";
 
 describe("Broadcasts", () => {
   let mockFetch: ReturnType<typeof vi.fn>;
@@ -16,6 +19,11 @@ describe("Broadcasts", () => {
       status,
       text: async () => JSON.stringify(payload),
     });
+  };
+
+  const sentBody = (): unknown => {
+    const [, init] = mockFetch.mock.calls[0] as [string, { body: string }];
+    return JSON.parse(init.body);
   };
 
   beforeEach(() => {
@@ -58,53 +66,31 @@ describe("Broadcasts", () => {
       expect(data).toEqual(broadcastDetail);
       expect(mockFetch).toHaveBeenCalledWith(
         "https://api.coffeemail.com.br/v1/product/broadcasts",
-        expect.objectContaining({
-          method: "POST",
-          body: JSON.stringify({
-            audienceId: "aud_123",
-            fromEmail: "contato@empresa.com.br",
-            html: "<p>Promoção imperdível</p>",
-            subject: "Promoção de Setembro",
-          }),
-        }),
+        expect.objectContaining({ method: "POST" }),
       );
+      expect(sentBody()).toEqual({
+        audienceId: "aud_123",
+        fromEmail: "contato@empresa.com.br",
+        html: "<p>Promoção imperdível</p>",
+        subject: "Promoção de Setembro",
+      });
     });
 
-    it("deve normalizar scheduledAt de Date para string ISO 8601 no body enviado", async () => {
-      mockOkThen({
-        ...broadcastDetail,
-        status: "scheduled",
-        scheduledAt: "2026-10-01T12:00:00.000Z",
-      });
+    it("não envia campos fora do contrato, como o agendamento ainda inexistente", async () => {
+      mockOkThen(broadcastDetail);
 
-      const scheduledAt = new Date("2026-10-01T12:00:00.000Z");
-
-      const { data, error } = await broadcasts.create({
+      await broadcasts.create({
         audienceId: "aud_123",
         fromEmail: "contato@empresa.com.br",
         templateId: "tpl_123",
-        scheduledAt,
+        scheduledAt: new Date("2026-10-01T12:00:00.000Z"),
+      } as unknown as CreateBroadcastPayload);
+
+      expect(sentBody()).toEqual({
+        audienceId: "aud_123",
+        fromEmail: "contato@empresa.com.br",
+        templateId: "tpl_123",
       });
-
-      expect(error).toBeNull();
-      expect(data?.status).toBe("scheduled");
-      expect(mockFetch).toHaveBeenCalledWith(
-        "https://api.coffeemail.com.br/v1/product/broadcasts",
-        expect.objectContaining({
-          method: "POST",
-          body: JSON.stringify({
-            audienceId: "aud_123",
-            fromEmail: "contato@empresa.com.br",
-            templateId: "tpl_123",
-            scheduledAt: "2026-10-01T12:00:00.000Z",
-          }),
-        }),
-      );
-
-      const [, init] = mockFetch.mock.calls[0] as [string, { body: string }];
-      const sentBody = JSON.parse(init.body) as { scheduledAt: unknown };
-      expect(sentBody.scheduledAt).toBe("2026-10-01T12:00:00.000Z");
-      expect(typeof sentBody.scheduledAt).toBe("string");
     });
 
     it("deve retornar erro de validação quando payload é inválido", async () => {
@@ -355,7 +341,6 @@ describe("Broadcasts", () => {
       expect(data).toBeNull();
       expect(error?.name).toBe("PermissionError");
       expect(error?.code).toBe("PERMISSION_DENIED");
-      // Sem pre-flight client-side: uma única chamada de rede, a requisição real.
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 

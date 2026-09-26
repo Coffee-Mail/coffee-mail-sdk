@@ -1,7 +1,7 @@
 import type { HttpClient } from "../core/http-client.js";
 import { ForbiddenError, PermissionError } from "../core/errors.js";
+import type { CreateBroadcastWireBodyKey } from "../generated/contract-check.js";
 import { getI18nMessage } from "../core/i18n/index.js";
-import { normalizeScheduledAt } from "../core/normalizers.js";
 import { toQueryParams } from "../core/query.js";
 import type { CoffeeMailResponse } from "../core/types.js";
 import type {
@@ -15,17 +15,38 @@ import type {
 
 const REQUIRES_FULL_ACCESS = "full_access";
 
+const CREATE_BROADCAST_WIRE_KEYS: ReadonlyArray<CreateBroadcastWireBodyKey> = [
+  "audienceId",
+  "fromEmail",
+  "templateId",
+  "subject",
+  "html",
+  "text",
+  "replyTo",
+  "variables",
+];
+
+const formatCreateBody = (
+  payload: CreateBroadcastPayload,
+): Record<string, unknown> => {
+  const source = payload as Record<string, unknown>;
+  const body: Record<string, unknown> = {};
+  for (const key of CREATE_BROADCAST_WIRE_KEYS) {
+    if (source[key] === undefined) continue;
+    body[key] = source[key];
+  }
+  return body;
+};
+
 export class Broadcasts {
   constructor(private readonly http: HttpClient) {}
 
   public async create(
     payload: CreateBroadcastPayload,
   ): Promise<CoffeeMailResponse<BroadcastDetail>> {
-    const scheduledAt = normalizeScheduledAt(payload.scheduledAt);
-
     const result = await this.http.post<BroadcastDetail>(
       "/v1/product/broadcasts",
-      { ...payload, ...(scheduledAt ? { scheduledAt } : {}) },
+      formatCreateBody(payload),
     );
     return this.remapForbidden(result, "broadcasts.create");
   }
@@ -64,16 +85,6 @@ export class Broadcasts {
     );
     return this.remapForbidden(result, "broadcasts.cancel");
   }
-
-  /**
-   * O servidor já aplica a autorização de `full_access` para broadcasts (HTTP 403).
-   * Este método preserva o contrato público pré-existente convertendo esse 403
-   * (que o SDK mapeia para `ForbiddenError`) de volta para `PermissionError` —
-   * a classe que este recurso sempre expôs para esse cenário — sem reintroduzir
-   * o pre-flight client-side que causava falso-negativo (fail-open quando a
-   * introspecção falhava) e falso-positivo (cache de 5min rejeitando chamadas
-   * válidas após um upgrade de escopo).
-   */
   private remapForbidden<T>(
     result: CoffeeMailResponse<T>,
     operation: string,

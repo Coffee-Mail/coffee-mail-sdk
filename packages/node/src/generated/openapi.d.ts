@@ -2889,11 +2889,6 @@ export interface paths {
                          * @description Endereço de e-mail para respostas
                          */
                         replyTo?: string;
-                        /**
-                         * Format: date-time
-                         * @description Data e hora agendadas para o envio
-                         */
-                        scheduledAt?: string;
                         /** @description Variáveis usadas na personalização do template */
                         variables?: {
                             [key: string]: unknown;

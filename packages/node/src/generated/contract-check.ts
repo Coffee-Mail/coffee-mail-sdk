@@ -77,3 +77,8 @@ type JsonRequestBody<
   : never;
 
 export type SendEmailWireBodyKey = keyof JsonRequestBody<"/v1/product/emails", "post">;
+
+export type CreateBroadcastWireBodyKey = keyof JsonRequestBody<
+  "/v1/product/broadcasts",
+  "post"
+>;
