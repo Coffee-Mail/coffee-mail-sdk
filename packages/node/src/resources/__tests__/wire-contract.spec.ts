@@ -7,12 +7,6 @@ import { Stats } from "../stats.js";
 import { Suppressions } from "../suppressions.js";
 import { Templates } from "../templates.js";
 import { Webhooks } from "../webhooks.js";
-
-/**
- * Regressão para os métodos que apontavam para URLs/métodos HTTP inexistentes
- * na API real (templates.preview, stats.get, domains.getHealth) ou que
- * assumiam um corpo de resposta que a API nunca envia (delete/cancel com 204).
- */
 describe("wire contract regression", () => {
   let mockFetch: ReturnType<typeof vi.fn>;
   let client: HttpClient;

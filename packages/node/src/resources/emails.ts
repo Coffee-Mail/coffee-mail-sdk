@@ -19,12 +19,6 @@ import type {
   SendEmailPayload,
   SendEmailResponse,
 } from "../types/emails.types.js";
-
-/**
- * Retorna `true` para valores "presentes" no payload: não-undefined, não-vazio para
- * coleções e não-string-vazia para textos. Usado para filtrar campos opcionais antes
- * de enviá-los para a API (a API rejeita campos `null`/`""` que não foram pedidos).
- */
 const isPresent = (value: unknown): boolean => {
   if (value === undefined || value === null) return false;
   if (typeof value === "string") return value.length > 0;
@@ -80,23 +74,6 @@ const serializeAttachment = (
     ...(attachment.cid ? { cid: attachment.cid } : {}),
   };
 };
-
-/**
- * Mapa declarativo do payload → body da requisição HTTP.
- *
- * Cada entrada diz: "do campo `source` do payload, derive o valor a ser colocado
- * sob a chave `target` no body". Quando o `source` é `undefined`/vazio, a entrada
- * é ignorada. Se houver `map`, o valor é transformado antes de entrar no body
- * (útil para normalizar `Date → ISO`, listas, anexos, etc.).
- *
- * Por que isso é melhor que `...(x ? { x } : {})` repetido?
- *   1. Adicionar um campo novo = 1 linha.
- *   2. Trocar a normalização de um campo = 1 ponto de edição.
- *   3. A regra de "presente vs. ausente" é uniforme (sem 13 ternários divergentes).
- *
- * O tipo é propositalmente sem generics: o `map` aceita `unknown` para que o array
- * seja homogêneo e a inferência funcione sem virar uma união patológica.
- */
 type PayloadEntry = {
   readonly source: keyof SendEmailPayload;
   readonly target: SendEmailWireBodyKey;

@@ -19,6 +19,14 @@ import type {
   WebhookDetail,
 } from "../types/webhooks.types.js";
 
+type WebhookRawPayload = VerifyWebhookSignatureOptions["payload"];
+
+const toRawBodyString = (payload: WebhookRawPayload): string => {
+  if (typeof payload === "string") return payload;
+  if (Buffer.isBuffer(payload)) return payload.toString("utf-8");
+  return new TextDecoder("utf-8").decode(payload);
+};
+
 /**
  * Recurso de gerenciamento e verificação criptográfica de Webhooks do CoffeeMail.
  */
@@ -204,14 +212,7 @@ export class Webhooks {
       const { payload, signature, secret } = options;
       if (!signature || !secret || !payload) return false;
 
-      // `payload` pode chegar como `string`, `Buffer` (Node) ou `Uint8Array` (web).
-      // Em todos os casos, transformamos para o raw body string que será hasheado.
-      const rawString =
-        typeof payload === "string"
-          ? payload
-          : Buffer.isBuffer(payload)
-            ? payload.toString("utf-8")
-            : new TextDecoder("utf-8").decode(payload);
+      const rawString = toRawBodyString(payload);
 
       const computed = createHmac("sha256", secret)
         .update(rawString)

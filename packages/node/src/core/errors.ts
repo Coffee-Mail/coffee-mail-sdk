@@ -139,15 +139,6 @@ export class PermissionError extends CoffeeMailError {
     this.requiredPermission = requiredPermission;
   }
 }
-
-/**
- * Mapa de fábrica: status HTTP → classe de erro especializada.
- *
- * Substitui o antigo `switch` por um lookup O(1), mais idiomático em TypeScript,
- * mais fácil de estender (basta adicionar uma entrada) e que evita fallthroughs
- * acidentais. Para mapear múltiplos status para a mesma classe (ex.: 5xx), basta
- * adicionar uma nova entrada na tabela.
- */
 type ErrorFactory = (message: string, details?: unknown) => CoffeeMailError;
 
 const errorFactoriesByStatus: Readonly<Record<number, ErrorFactory>> = {

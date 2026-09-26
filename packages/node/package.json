@@ -50,8 +50,9 @@
     "test:watch": "vitest",
     "generate:types": "node scripts/generate-types.mjs",
     "check:version-sync": "node scripts/check-version-sync.mjs",
-    "prepublishOnly": "npm run check:version-sync && npm run build",
-    "release:public": "npm publish --access public"
+    "prepublishOnly": "npm run check:version-sync && npm run check:standards && npm run build",
+    "release:public": "npm publish --access public",
+    "check:standards": "node scripts/check-code-standards.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",

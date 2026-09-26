@@ -3,7 +3,7 @@
   "version": "0.1.5",
   "private": true,
   "license": "UNLICENSED",
-  "description": "Monorepo de SDKs oficiais do CoffeeMail (proprietário)",
+  "description": "Monorepo de SDKs oficiais do CoffeeMail (propriet\u00e1rio)",
   "packageManager": "pnpm@11.26.0",
   "scripts": {
     "build": "turbo run build",
@@ -12,7 +12,8 @@
     "format": "prettier --write \"**/*.{ts,json,md}\"",
     "clean": "turbo run clean && rm -rf node_modules",
     "build:node": "pnpm --filter @coffeemail/node build",
-    "publish:node": "pnpm --filter @coffeemail/node publish --access public --no-git-checks"
+    "publish:node": "pnpm --filter @coffeemail/node publish --access public --no-git-checks",
+    "check:standards": "turbo run check:standards"
   },
   "devDependencies": {
     "@types/node": "^26.5.0",
