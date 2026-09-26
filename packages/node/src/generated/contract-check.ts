@@ -4,10 +4,12 @@
  * real promete no spec gerado (openapi.d.ts). Não existe código em runtime
  * aqui — é puramente `tsc --noEmit` (já parte de `npm run typecheck`/CI).
  *
- * Verificamos apenas RESPONSES, não requests: os payloads de entrada do SDK
- * são deliberadamente mais ergonômicos que o formato de rede (ex: anexos
- * aceitam `Uint8Array` no SDK, mas viajam como string base64) — uma checagem
- * rígida ali geraria alarme falso constante, não sinal de drift real.
+ * Para RESPONSES a checagem é estrutural. Para REQUESTS checamos apenas as
+ * CHAVES que vão para a rede, não seus tipos: o payload de entrada do SDK é
+ * deliberadamente mais ergonômico que o formato de rede (anexos aceitam
+ * `Uint8Array` e viajam como base64), então comparar tipos geraria alarme
+ * falso. Comparar chaves pega o drift real — um campo que o SDK envia e a
+ * API não conhece.
  *
  * Direção do check: o que a API promete (`ApiType`) precisa satisfazer o que
  * o SDK promete ao consumidor (`OurType`) — se a API deixar de entregar um
@@ -64,3 +66,14 @@ export type _CheckSuppressionDetail = Assert<
 export type _CheckStatsResponse = Assert<
   Extends<Json200<"/v1/product/stats", "get">, StatsResponse>
 >;
+
+type JsonRequestBody<
+  Path extends keyof paths,
+  Method extends keyof paths[Path],
+> = paths[Path][Method] extends {
+  requestBody: { content: { "application/json": infer B } };
+}
+  ? B
+  : never;
+
+export type SendEmailWireBodyKey = keyof JsonRequestBody<"/v1/product/emails", "post">;

@@ -3,6 +3,7 @@ import { Buffer } from "node:buffer";
 import { ValidationError } from "../core/errors.js";
 import type { HttpClient } from "../core/http-client.js";
 import { normalizeScheduledAt } from "../core/normalizers.js";
+import type { SendEmailWireBodyKey } from "../generated/contract-check.js";
 import { toQueryParams } from "../core/query.js";
 import type { CoffeeMailResponse } from "../core/types.js";
 import type {
@@ -98,7 +99,7 @@ const serializeAttachment = (
  */
 type PayloadEntry = {
   readonly source: keyof SendEmailPayload;
-  readonly target: string;
+  readonly target: SendEmailWireBodyKey;
   readonly map?: (value: unknown) => unknown;
 };
 
@@ -131,7 +132,6 @@ const PAYLOAD_ENTRIES: ReadonlyArray<PayloadEntry> = [
     map: (v) => (v as ReadonlyArray<EmailAttachment>).map(serializeAttachment),
   },
   { source: "tags", target: "tags" },
-  { source: "idempotencyKey", target: "idempotencyKey" },
 ];
 
 const formatSendBody = (payload: SendEmailPayload): Record<string, unknown> => {
@@ -155,12 +155,16 @@ const formatSendBody = (payload: SendEmailPayload): Record<string, unknown> => {
     body["scheduledAt"] = scheduledAt;
   }
 
-  if (payload.isSandbox !== undefined) {
-    body["isSandbox"] = payload.isSandbox;
-  }
-
   return body;
 };
+
+const IDEMPOTENCY_HEADER = "x-idempotency-key";
+const SANDBOX_HEADER = "x-coffeemail-sandbox";
+
+const formatSendHeaders = (payload: SendEmailPayload): Record<string, string> => ({
+  ...(payload.idempotencyKey ? { [IDEMPOTENCY_HEADER]: payload.idempotencyKey } : {}),
+  ...(payload.isSandbox === true ? { [SANDBOX_HEADER]: "true" } : {}),
+});
 
 /**
  * Recurso de gerenciamento e disparo de e-mails da API CoffeeMail.
@@ -187,6 +191,8 @@ export class Emails {
     return this.http.post<SendEmailResponse>(
       "/v1/product/emails",
       formatSendBody(payload),
+      undefined,
+      formatSendHeaders(payload),
     );
   }
 
@@ -205,9 +211,15 @@ export class Emails {
     items: ReadonlyArray<SendEmailPayload>,
   ): Promise<CoffeeMailResponse<ReadonlyArray<BatchSendEmailResult>>> {
     const formatted = items.map(formatSendBody);
+    const batchHeaders = items.reduce<Record<string, string>>(
+      (headers, item) => ({ ...headers, ...formatSendHeaders(item) }),
+      {},
+    );
     return this.http.post<ReadonlyArray<BatchSendEmailResult>>(
       "/v1/product/emails/batch",
       formatted,
+      undefined,
+      batchHeaders,
     );
   }
 
