@@ -59,16 +59,35 @@ const BANNED_SYNTAX = [
   { kind: ts.SyntaxKind.VoidExpression, message: 'operador void: trate a promise explicitamente' },
 ];
 
+const MAX_BLOCK_DEPTH = 3;
+
+const isNestingBlock = (node) =>
+  ts.isIfStatement(node) ||
+  ts.isForStatement(node) ||
+  ts.isForOfStatement(node) ||
+  ts.isForInStatement(node) ||
+  ts.isWhileStatement(node) ||
+  ts.isDoStatement(node);
+
 const collectSyntaxViolations = (source) => {
   const found = [];
-  const walk = (node) => {
+  const walk = (node, depth = 0) => {
     for (const banned of BANNED_SYNTAX) {
       if (node.kind === banned.kind) found.push({ pos: node.getStart(source), message: banned.message });
     }
     if (ts.isIfStatement(node) && node.elseStatement) {
       found.push({ pos: node.elseStatement.getStart(source), message: 'else/else if: use early return' });
     }
-    ts.forEachChild(node, walk);
+
+    const nests = isNestingBlock(node);
+    const nextDepth = nests ? depth + 1 : depth;
+    if (nests && nextDepth > MAX_BLOCK_DEPTH) {
+      found.push({
+        pos: node.getStart(source),
+        message: `bloco aninhado fundo demais (${nextDepth}); máximo ${MAX_BLOCK_DEPTH}`,
+      });
+    }
+    ts.forEachChild(node, (child) => walk(child, nextDepth));
   };
   walk(source);
   return found;
