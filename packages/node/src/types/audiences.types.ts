@@ -60,6 +60,10 @@ export interface AudienceDetail {
   readonly name: string;
   readonly description: string | null;
   readonly active: boolean;
+  readonly totalContacts: number;
+  /**
+   * @deprecated Utilize `totalContacts`. Mantido para retrocompatibilidade.
+   */
   readonly contactsCount: number;
   readonly createdAt: string;
   readonly updatedAt: string;

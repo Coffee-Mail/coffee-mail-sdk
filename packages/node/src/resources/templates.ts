@@ -1,9 +1,11 @@
+import { toQueryParams } from "../core/query.js";
 import type { HttpClient } from "../core/http-client.js";
 import type { CoffeeMailResponse } from "../core/types.js";
 import type {
   CreateTemplatePayload,
   FormatTemplatePayload,
   FormatTemplateResponse,
+  ListTemplatesQuery,
   ListTemplatesResponse,
   PreviewTemplatePayload,
   PreviewTemplateResponse,
@@ -24,8 +26,26 @@ export class Templates {
     return this.http.post<TemplateDetail>("/v1/product/templates", payload);
   }
 
-  public async list(): Promise<CoffeeMailResponse<ListTemplatesResponse>> {
-    return this.http.get<ListTemplatesResponse>("/v1/product/templates");
+  public async list(
+    query?: ListTemplatesQuery,
+  ): Promise<CoffeeMailResponse<ListTemplatesResponse>> {
+    const response = await this.http.get<{
+      readonly data?: ReadonlyArray<TemplateDetail>;
+      readonly templates?: ReadonlyArray<TemplateDetail>;
+    }>("/v1/product/templates", toQueryParams(query));
+
+    if (response.error) {
+      return response;
+    }
+
+    const items = response.data.templates ?? response.data.data ?? [];
+    return {
+      data: {
+        templates: items,
+        data: items,
+      },
+      error: null,
+    };
   }
 
   public async get(id: string): Promise<CoffeeMailResponse<TemplateDetail>> {
@@ -60,6 +80,27 @@ export class Templates {
       "/v1/product/templates/preview",
       payload,
     );
+  }
+
+  /**
+   * Renderiza a pré-visualização de um template existente a partir do seu ID.
+   */
+  public async previewById(
+    templateId: string,
+    variables?: Record<string, unknown>,
+  ): Promise<CoffeeMailResponse<PreviewTemplateResponse>> {
+    const templateResult = await this.get(templateId);
+    if (templateResult.error) {
+      return templateResult;
+    }
+
+    const payload: PreviewTemplatePayload = {
+      html: templateResult.data.html,
+      ...(templateResult.data.format !== undefined ? { format: templateResult.data.format } : {}),
+      ...(variables !== undefined ? { variables } : {}),
+    };
+
+    return this.preview(payload);
   }
 
   /**

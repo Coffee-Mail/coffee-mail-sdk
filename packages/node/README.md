@@ -112,9 +112,12 @@ const isValid = Webhooks.verifySignature({
 
 ### 4. Templates, Audiências e Campanhas
 
-- **`coffeemail.templates`**: Criação, atualização, listagem, remoção, pré-visualização (`preview`), formatação (`format`), renderização sanitizada (`testRender`) e templates iniciais prontos (`listStarters`/`getStarter`).
-- **`coffeemail.audiences`**: Criação, atualização, listagem e remoção de audiências.
-- **`coffeemail.audiences.contacts`**: Criação, atualização, listagem, remoção e inserção em lote (`bulkAdd`) de contatos por audiência.
+- **`coffeemail.templates`**: Criação, atualização, listagem (`templates.list()`), remoção, pré-visualização por ID (`previewById(templateId, variables)`) ou por payload (`preview`), formatação (`format`), renderização sanitizada (`testRender`) e templates iniciais prontos (`listStarters`/`getStarter`).
+- **`coffeemail.audiences`**: Criação, atualização, listagem e remoção de audiências. Inclui atalhos diretos para contatos:
+  - `audiences.listContacts(audienceId, query)`
+  - `audiences.createContact(audienceId, payload)`
+  - `audiences.bulkAddContacts(audienceId, payload)`
+  - Também disponível via sub-recurso: `coffeemail.audiences.contacts`.
 - **`coffeemail.broadcasts`**: Criação e disparo de campanhas em massa com headers RFC 8058.
 - **`coffeemail.suppressions`**: Criação, consulta, listagem, remoção e reativação (`reactivate`) de supressões (bounces, complaints e descadastros).
 - **`coffeemail.stats`**: `get(query)` retorna totais do período (`totalSent`, `totalDelivered`, `totalBounced`, `totalFailed`) e uma série histórica agrupada por dia/semana/mês.

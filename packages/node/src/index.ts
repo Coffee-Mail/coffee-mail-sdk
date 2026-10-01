@@ -1,4 +1,4 @@
-export const COFFEEMAIL_VERSION = "0.1.4";
+export const COFFEEMAIL_VERSION = "0.2.0";
 
 export { CoffeeMail } from "./client.js";
 
@@ -72,6 +72,7 @@ export type {
   TemplateFormat,
   TemplateVariable,
   TemplateDetail,
+  ListTemplatesQuery,
   ListTemplatesResponse,
   CreateTemplatePayload,
   UpdateTemplatePayload,

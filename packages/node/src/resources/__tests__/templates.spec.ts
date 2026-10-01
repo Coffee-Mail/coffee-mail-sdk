@@ -176,10 +176,23 @@ describe("Templates", () => {
       const { data, error } = await templates.list();
 
       expect(error).toBeNull();
+      expect(data?.templates).toHaveLength(1);
+      expect(data?.templates[0]?.id).toBe("tpl_123");
       expect(data?.data).toHaveLength(1);
       expect(data?.data[0]?.id).toBe("tpl_123");
       expect(mockFetch).toHaveBeenCalledWith(
         "https://api.coffeemail.com.br/v1/product/templates",
+        expect.objectContaining({ method: "GET" }),
+      );
+    });
+
+    it("deve repassar query parameters opcionais de paginação", async () => {
+      mockFetch.mockResolvedValue(jsonResponse({ data: [] }));
+
+      await templates.list({ limit: 10, after: "cursor_1" });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://api.coffeemail.com.br/v1/product/templates?limit=10&after=cursor_1",
         expect.objectContaining({ method: "GET" }),
       );
     });
@@ -380,5 +393,49 @@ describe("Templates", () => {
     expect(data).toBeNull();
     expect(error).toBeInstanceOf(ConflictError);
     expect(error?.status).toBe(409);
+  });
+
+  describe("previewById", () => {
+    it("deve carregar o template por ID e executar preview do seu conteúdo", async () => {
+      mockFetch
+        .mockResolvedValueOnce(
+          jsonResponse({
+            id: "tpl_123",
+            name: "Template Base",
+            html: "<h1>Olá {{name}}</h1>",
+            format: "html",
+          }),
+        )
+        .mockResolvedValueOnce(
+          jsonResponse({
+            html: "<h1>Olá João</h1>",
+            text: "Olá João",
+          }),
+        );
+
+      const { data, error } = await templates.previewById("tpl_123", {
+        name: "João",
+      });
+
+      expect(error).toBeNull();
+      expect(data?.html).toBe("<h1>Olá João</h1>");
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        1,
+        "https://api.coffeemail.com.br/v1/product/templates/tpl_123",
+        expect.objectContaining({ method: "GET" }),
+      );
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        "https://api.coffeemail.com.br/v1/product/templates/preview",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            html: "<h1>Olá {{name}}</h1>",
+            format: "html",
+            variables: { name: "João" },
+          }),
+        }),
+      );
+    });
   });
 });

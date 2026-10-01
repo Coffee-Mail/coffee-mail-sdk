@@ -28,8 +28,18 @@ export interface TemplateDetail {
   readonly updatedAt: string;
 }
 
+export interface ListTemplatesQuery {
+  readonly limit?: number;
+  readonly after?: string;
+}
+
 export interface ListTemplatesResponse {
+  readonly templates: ReadonlyArray<TemplateDetail>;
+  /**
+   * @deprecated Utilize a propriedade padronizada `templates`. Mantido para retrocompatibilidade.
+   */
   readonly data: ReadonlyArray<TemplateDetail>;
+  readonly nextCursor?: string | null;
 }
 
 /**
@@ -67,8 +77,8 @@ export interface UpdateTemplatePayload {
 
 export interface PreviewTemplatePayload {
   readonly html: string;
-  readonly format?: TemplateFormat;
-  readonly variables?: Record<string, unknown>;
+  readonly format?: TemplateFormat | undefined;
+  readonly variables?: Record<string, unknown> | undefined;
 }
 
 export interface PreviewTemplateResponse {

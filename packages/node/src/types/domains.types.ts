@@ -62,6 +62,7 @@ export interface CreateDomainResponse {
   readonly name: string;
   readonly status: "pending" | "verified" | "failed";
   readonly dkimRecordsToPublish: ReadonlyArray<DomainDnsRecord>;
+  readonly createdAt: string;
 }
 
 export interface DeleteDomainResponse {

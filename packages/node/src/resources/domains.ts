@@ -33,7 +33,20 @@ export class Domains {
   public async create(
     payload: CreateDomainPayload,
   ): Promise<CoffeeMailResponse<CreateDomainResponse>> {
-    return this.http.post<CreateDomainResponse>("/v1/product/domains", payload);
+    const response = await this.http.post<CreateDomainResponse>(
+      "/v1/product/domains",
+      payload,
+    );
+    if (response.error) {
+      return response;
+    }
+    return {
+      data: {
+        ...response.data,
+        createdAt: response.data.createdAt ?? new Date().toISOString(),
+      },
+      error: null,
+    };
   }
 
   /**

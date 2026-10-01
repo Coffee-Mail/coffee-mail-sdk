@@ -79,6 +79,15 @@ export class Contacts {
   }
 }
 
+const normalizeAudience = (aud: AudienceDetail): AudienceDetail => {
+  const count = aud.totalContacts ?? aud.contactsCount ?? 0;
+  return {
+    ...aud,
+    totalContacts: count,
+    contactsCount: count,
+  };
+};
+
 export class Audiences {
   public readonly contacts: Contacts;
 
@@ -89,20 +98,49 @@ export class Audiences {
   public async create(
     payload: CreateAudiencePayload,
   ): Promise<CoffeeMailResponse<AudienceDetail>> {
-    return this.http.post<AudienceDetail>("/v1/product/audiences", payload);
+    const response = await this.http.post<AudienceDetail>(
+      "/v1/product/audiences",
+      payload,
+    );
+    if (response.error) {
+      return response;
+    }
+    return {
+      data: normalizeAudience(response.data),
+      error: null,
+    };
   }
 
   public async list(
     query?: OffsetPaginationQuery,
   ): Promise<CoffeeMailResponse<ListAudiencesResponse>> {
-    return this.http.get<ListAudiencesResponse>(
+    const response = await this.http.get<ListAudiencesResponse>(
       "/v1/product/audiences",
       toQueryParams(query),
     );
+    if (response.error) {
+      return response;
+    }
+    return {
+      data: {
+        total: response.data.total,
+        audiences: response.data.audiences.map(normalizeAudience),
+      },
+      error: null,
+    };
   }
 
   public async get(id: string): Promise<CoffeeMailResponse<AudienceDetail>> {
-    return this.http.get<AudienceDetail>(`/v1/product/audiences/${id}`);
+    const response = await this.http.get<AudienceDetail>(
+      `/v1/product/audiences/${id}`,
+    );
+    if (response.error) {
+      return response;
+    }
+    return {
+      data: normalizeAudience(response.data),
+      error: null,
+    };
   }
 
   public async update(
@@ -120,5 +158,38 @@ export class Audiences {
    */
   public async delete(id: string): Promise<CoffeeMailResponse<void>> {
     return this.http.delete<void>(`/v1/product/audiences/${id}`);
+  }
+
+  /**
+   * Atalho ergonômico para listar contatos de uma audiência.
+   * Equivalente a `coffeemail.audiences.contacts.list(audienceId, query)`.
+   */
+  public async listContacts(
+    audienceId: string,
+    query?: OffsetPaginationQuery,
+  ): Promise<CoffeeMailResponse<ListContactsResponse>> {
+    return this.contacts.list(audienceId, query);
+  }
+
+  /**
+   * Atalho ergonômico para cadastrar um contato em uma audiência.
+   * Equivalente a `coffeemail.audiences.contacts.create(audienceId, payload)`.
+   */
+  public async createContact(
+    audienceId: string,
+    payload: CreateContactPayload,
+  ): Promise<CoffeeMailResponse<ContactDetail>> {
+    return this.contacts.create(audienceId, payload);
+  }
+
+  /**
+   * Atalho ergonômico para inserção de contatos em lote em uma audiência.
+   * Equivalente a `coffeemail.audiences.contacts.bulkAdd(audienceId, payload)`.
+   */
+  public async bulkAddContacts(
+    audienceId: string,
+    payload: BulkAddContactsPayload,
+  ): Promise<CoffeeMailResponse<BulkAddContactsResult>> {
+    return this.contacts.bulkAdd(audienceId, payload);
   }
 }

@@ -107,6 +107,7 @@ describe("Audiences & Contacts", () => {
       expect(error).toBeNull();
       expect(data?.id).toBe("aud_123");
       expect(data?.contactsCount).toBe(42);
+      expect(data?.totalContacts).toBe(42);
       expect(mockFetch).toHaveBeenCalledWith(
         "https://api.coffeemail.com.br/v1/product/audiences/aud_123",
         expect.objectContaining({ method: "GET" }),
@@ -216,6 +217,82 @@ describe("Audiences & Contacts", () => {
         "https://api.coffeemail.com.br/v1/product/audiences/aud_inexistente",
         expect.objectContaining({ method: "DELETE" }),
       );
+    });
+
+    describe("Atalhos diretos de contatos", () => {
+      it("deve delegar listContacts para contacts.list", async () => {
+        mockFetch.mockResolvedValue(
+          jsonResponse({
+            contacts: [
+              {
+                id: "con_1",
+                email: "user@example.com",
+                firstName: "User",
+                lastName: null,
+                metadata: {},
+                createdAt: "2026-09-08T22:00:00.000Z",
+              },
+            ],
+            total: 1,
+          }),
+        );
+
+        const { data, error } = await audiences.listContacts("aud_123", {
+          limit: 10,
+        });
+
+        expect(error).toBeNull();
+        expect(data?.contacts).toHaveLength(1);
+        expect(mockFetch).toHaveBeenCalledWith(
+          "https://api.coffeemail.com.br/v1/product/audiences/aud_123/contacts?limit=10",
+          expect.objectContaining({ method: "GET" }),
+        );
+      });
+
+      it("deve delegar createContact para contacts.create", async () => {
+        mockFetch.mockResolvedValue(
+          jsonResponse({
+            id: "con_1",
+            email: "novo@example.com",
+            firstName: "Novo",
+            lastName: null,
+            metadata: {},
+            createdAt: "2026-09-08T22:00:00.000Z",
+          }),
+        );
+
+        const { data, error } = await audiences.createContact("aud_123", {
+          email: "novo@example.com",
+        });
+
+        expect(error).toBeNull();
+        expect(data?.id).toBe("con_1");
+        expect(mockFetch).toHaveBeenCalledWith(
+          "https://api.coffeemail.com.br/v1/product/audiences/aud_123/contacts",
+          expect.objectContaining({ method: "POST" }),
+        );
+      });
+
+      it("deve delegar bulkAddContacts para contacts.bulkAdd", async () => {
+        mockFetch.mockResolvedValue(
+          jsonResponse({
+            inserted: 2,
+            skipped: 0,
+            errors: [],
+          }),
+        );
+
+        const { data, error } = await audiences.bulkAddContacts("aud_123", {
+          contacts: [{ email: "a@test.com" }, { email: "b@test.com" }],
+        });
+
+        expect(error).toBeNull();
+        expect(data?.inserted).toBe(2);
+        expect(mockFetch).toHaveBeenCalledWith(
+          "https://api.coffeemail.com.br/v1/product/audiences/aud_123/contacts/bulk",
+          expect.objectContaining({ method: "POST" }),
+        );
+      });
     });
   });
 
