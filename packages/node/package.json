@@ -16,12 +16,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Dev-Etto/coffee-mail-sdk.git",
+    "url": "git+https://github.com/Coffee-Mail/coffee-mail-sdk.git",
     "directory": "packages/node"
   },
-  "homepage": "https://github.com/Dev-Etto/coffee-mail-sdk/tree/main/packages/node#readme",
+  "homepage": "https://github.com/Coffee-Mail/coffee-mail-sdk/tree/main/packages/node#readme",
   "bugs": {
-    "url": "https://github.com/Dev-Etto/coffee-mail-sdk/issues"
+    "url": "https://github.com/Coffee-Mail/coffee-mail-sdk/issues"
   },
   "engines": {
     "node": ">=18"
