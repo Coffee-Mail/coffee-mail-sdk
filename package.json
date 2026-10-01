@@ -1,24 +1,64 @@
 {
-  "name": "coffee-mail-sdk",
-  "version": "0.1.6",
-  "private": true,
+  "name": "@coffeemail/node",
+  "version": "0.2.0",
+  "description": "SDK oficial Node.js e TypeScript para a plataforma CoffeeMail",
+  "keywords": [
+    "coffeemail",
+    "email",
+    "transactional-email",
+    "sdk"
+  ],
+  "author": "CoffeeMail",
   "license": "UNLICENSED",
-  "description": "Monorepo de SDKs oficiais do CoffeeMail (proprietário)",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Coffee-Mail/coffee-mail-sdk-node.git"
+  },
+  "homepage": "https://github.com/Coffee-Mail/coffee-mail-sdk-node#readme",
+  "bugs": {
+    "url": "https://github.com/Coffee-Mail/coffee-mail-sdk-node/issues"
+  },
   "packageManager": "pnpm@11.26.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "turbo run build",
-    "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
-    "format": "prettier --write \"**/*.{ts,json,md}\"",
-    "clean": "turbo run clean && rm -rf node_modules",
-    "build:node": "pnpm --filter @coffeemail/node build",
-    "publish:node": "pnpm --filter @coffeemail/node publish --access public --no-git-checks",
-    "check:standards": "turbo run check:standards"
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "generate:types": "node scripts/generate-types.mjs",
+    "check:version-sync": "node scripts/check-version-sync.mjs",
+    "prepublishOnly": "npm run check:version-sync && npm run check:standards && npm run build",
+    "release:public": "npm publish --access public",
+    "check:standards": "node scripts/check-code-standards.mjs"
   },
   "devDependencies": {
-    "@types/node": "^26.5.0",
-    "prettier": "^3.5.3",
-    "turbo": "^2.4.4",
-    "typescript": "^5.7.3"
+    "@types/node": "^22.20.1",
+    "openapi-typescript": "^7.13.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7"
   }
 }

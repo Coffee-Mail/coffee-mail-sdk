@@ -1,12 +1,12 @@
 name: Publish @coffeemail/node
 
-# Disparado por uma tag no formato node-v1.2.3 — ex.: depois de bumpar a
-# versão em packages/node/package.json e commitar:
-#   git tag node-v1.2.3 && git push origin node-v1.2.3
+# Disparado por uma tag no formato v1.2.3 — ex.: depois de bumpar a
+# versão no package.json e commitar:
+#   git tag v1.2.3 && git push origin v1.2.3
 on:
   push:
     tags:
-      - 'node-v*'
+      - 'v*'
 
 jobs:
   publish:
@@ -30,6 +30,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check version sync
+        run: pnpm run check:version-sync
+
+      - name: Check code standards
+        run: pnpm run check:standards
+
       - name: Typecheck
         run: pnpm run typecheck
 
@@ -40,17 +46,15 @@ jobs:
         run: pnpm run build
 
       - name: Verify tag matches package.json version
-        working-directory: packages/node
         run: |
-          TAG_VERSION="${GITHUB_REF_NAME#node-v}"
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
           PKG_VERSION="$(node -p "require('./package.json').version")"
           if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
-            echo "Tag node-v$TAG_VERSION does not match package.json version $PKG_VERSION"
+            echo "Tag v$TAG_VERSION does not match package.json version $PKG_VERSION"
             exit 1
           fi
 
       - name: Publish to npm
-        working-directory: packages/node
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
